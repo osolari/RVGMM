@@ -1,0 +1,252 @@
+ \documentclass[twoside,11pt]{article}
+
+% Any additional packages needed should be included after jmlr2e.
+% Note that jmlr2e.sty includes epsfig, amssymb, natbib and graphicx,
+% and defines many common macros, such as 'proof' and 'example'.
+%
+% It also sets the bibliographystyle to plainnat; for more information on
+% natbib citation styles, see the natbib documentation, a copy of which
+% is archived at http://www.jmlr.org/format/natbib.pdf
+
+\usepackage{jmlr2e}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{float}
+%\usepackage{algorithm}
+\usepackage[load-configurations=version-1]{siunitx}
+%\usepackage{program}
+% Definitions of handy macros can go here
+
+\newcommand{\cs}[1]{\texttt{\char`\\#1}}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+
+\usepackage{amsmath,amssymb}
+\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathSymbol{\parallel}{\mathrel}{symbols}{"6B}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+
+
+\newcommand{\dataset}{{\cal D}}
+\newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
+
+% Heading arguments are {volume}{year}{pages}{submitted}{published}{author-full-names}
+
+%\jmlrheading{1}{2018}{1-48}{4/00}{10/00}{Omid S. Solari, Yulun Wu, James B. Brown}
+
+% Short headings should be running head and authors last names
+
+\ShortHeadings{RGVMM}{Solari, Wu, Brown}
+\firstpageno{1}
+
+\begin{document}
+
+\title{Repulsive Variational Gaussian Mixture Models}
+
+\author{\name Omid S. Solari\thanks{equally contributing authors, alphabetical order} \email solari@berkeley.edu \\
+       \addr Department of Statistics\\
+       University of California, Berkeley
+       \AND
+       \name Yulun Wu\footnotemark[1] \email yulun\_wu@berkeley.edu\\
+       \addr Department of Statistics\\
+       University of California, Berkeley
+       \AND
+       \name James B. Brown \email jbbrown@lbl.gov\\
+       \addr Lawrence Berkeley National Laboratory and Department of Statistics\\
+       University of California, Berkeley}
+
+\editor{}
+
+\maketitle
+
+\begin{abstract}%   <- trailing '%' for backward compatibility of .sty file
+
+
+\end{abstract}
+
+tentative achievements:
+\begin{enumerate}
+    \item True Gaussian mixture model
+    \item Bayesian repulsive priors
+    \item cluster single cell data and map them to body
+\end{enumerate}
+
+
+\begin{keywords}
+Gaussian Mixtures, Clustering, Variational Auto-Encoders
+\end{keywords}
+
+\section{Introduction}
+
+\begin{itemize}
+    \item review use cases of gmms
+    \item review uses in genomics specifically
+\end{itemize}
+
+\section{Background}
+
+
+\begin{itemize}
+    \item review gaussian mixture models
+    \item review vae
+    \item introduce repulsive priors
+    \item set up the use for single cell data
+\end{itemize}
+
+mention the shortcomings of GMVAE.
+
+\section{Problem Statment}
+
+general definition of Gaussian mixture models
+
+
+\section{Model}
+
+\subsection{Gaussian Mixture Variational Auto-Encoder}
+
+Dependency structure: (draw a graph)
+
+\subsubsection{Variational Lower Bound}
+\begin{equation} \label{ELBO}
+\mathcal{L}_\textit{ELBO} = \E_{q_\phi (
+    \bm{v}_\textit{latent} | \bm{v}_\textit{observed})} 
+    \left[ \log \frac{p_\theta (\bm{v}_\textit{latent}, 
+    \bm{v}_\textit{observed})}{ q_\phi (
+    \bm{v}_\textit{latent} | \bm{v}_\textit{observed})} 
+    \right]
+\end{equation}
+
+\subsubsection{Supervised}
+
+TODO: define notations
+
+\begin{equation} \label{supDeriv}
+\begin{split}
+\mathcal{D} \left[ q_\phi (\bm{z} | \bm{x}, \bm{y}) 
+    \parallel p_\theta (\bm{z} | \bm{x}, \bm{y}) 
+    \right] 
+ & = - \E_{q_\phi (\bm{z} | \bm{x}, \bm{y})} \left[ 
+    \log \frac{p_\theta (\bm{x}, \bm{y}, \bm{z})}{
+    q_\phi (\bm{z} | \bm{x}, \bm{y})} \right] + \log 
+    p_\theta (\bm{x}, \bm{y})\\
+ & = - \E_{q_\phi (\bm{z} | \bm{x}, \bm{y})} \left[
+    \log p_\theta (\bm{x} | \bm{z}) + 
+    \log p_\theta (\bm{z} | \bm{y}) - \log q_\phi (
+    \bm{z} | \bm{x}, \bm{y}) \right] \\
+ & \qquad - \log \frac{p (\bm{y})}{q_\phi (\bm{y} | 
+    \bm{x})} - \log q_\phi (\bm{y} | \bm{x}) + 
+    \log p_\theta (\bm{x}, \bm{y})
+\end{split}
+\end{equation}
+
+\begin{equation} \label{supELBO}
+\begin{split}
+\mathcal{L}_\textit{ELBO} 
+ & = \E_{q_\phi (\bm{z} | 
+    \bm{x}, \bm{y})} \left[ \log p_\theta (\bm{x} | 
+    \bm{z}) \right] + \log q_\phi (\bm{y} | \bm{x}) \\
+ & \qquad - \mathcal{D} \left[ q_\phi (
+    \bm{z} | \bm{x}, \bm{y}) \parallel p_\theta (
+    \bm{z} | \bm{y}) \right] - \left[ q_\phi (
+    \bm{y} | \bm{x}) \parallel p (\bm{y}) \right]
+\end{split}
+\end{equation}
+
+(Sometimes people add term $\alpha \dot \log q_\phi (
+\bm{y} | \bm{x})$ to amplify classification loss.) \\ 
+
+\subsubsection{Unsupervised}
+
+\begin{equation} \label{eq1}
+\mathcal{D} \left[ q_\phi (\bm{y}, \bm{z} | \bm{x}) || 
+    p_\theta (\bm{y}, \bm{z} | \bm{x}) \right] 
+ & = - \E_{q_\phi (\bm{y}, \bm{z} | \bm{x})} \left[ 
+    \log \frac{p_\theta (\bm{x}, \bm{y}, \bm{z})}{
+    q_\phi (\bm{y}, \bm{z} | \bm{x})} \right] + \log 
+    p_\theta (\bm{x})
+\end{equation}
+
+\begin{equation} \label{supELBO}
+\begin{split}
+\mathcal{L}_\textit{ELBO} 
+ & = \E_{q_\phi (\bm{z} | \bm{x})} \left[ \log 
+    p_\theta (\bm{x} | \bm{z}) \right] \\
+ & \qquad - \E_{q_\phi (\bm{y} | \bm{x})} 
+    \mathcal{D} \left[ q_\phi (\bm{z} | \bm{x}, 
+    \bm{y}) \parallel p_\theta (\bm{z} | \bm{y}) 
+    \right] - \mathcal{D} \left[ q_\phi (\bm{y} | 
+    \bm{x}) \parallel p (\bm{y}) \right]
+\end{split}
+\end{equation}
+
+\subsubsection{Estimation and Propagation}
+
+Sampling estimation for $q_\phi$: TODO \\
+
+Understanding the back-propagation for unsupervised case:
+$\E_{q_\phi (\bm{y} | \bm{x})} 
+    \mathcal{D} \left[ q_\phi (\bm{z} | \bm{x}, 
+    \bm{y}) \parallel p_\theta (\bm{z} | \bm{y}) 
+    \right]$
+
+\begin{lemma}
+Latent prior model is a GMM with SGD update.
+\end{lemma}
+
+\begin{proof}
+note: scaling gradient through propagation, $\sum_{\bm{y}}$, form of GMM model
+\end{proof}
+
+\begin{lemma}
+GMVAE reduces to VaDE in simple case.
+\end{lemma}
+
+\begin{lemma}
+SGD update is implicitly an MLE.
+\end{lemma}
+
+\subsection{Bayesian Repulsive Prior}
+
+find a nice drawing software for neural nets that allows depicting repulsion!
+
+\begin{lemma}
+some lemma or theorem on covariance repulsion! Use HSIC
+\end{lemma}
+
+\subsection{Regularization}
+
+\section{Experiments}
+
+
+
+\subsection{Simulation}
+\label{subsec:sim}
+
+Simple MNIST is sufficient
+
+\subsection{Single Cell Clustering}
+\label{subsec:tcga}
+
+Use The Human Cell Atlas data to show that 1. we can cluster them 2. with a simple linear transformation, those cells are mappable to their physical place! A cool picture ensues!
+\cite{weinstein2013cancer}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+
+\newpage
+
+\appendix
+
+
+\vskip 0.2in
+\bibliography{jmlr}
+
+\end{document}
