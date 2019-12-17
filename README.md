@@ -1,2 +1,2 @@
-# RVGMM
-Repulsive Variational Gaussian Mixture Models
+# RMVE
+Repulsive Mixture Variational Embedding
