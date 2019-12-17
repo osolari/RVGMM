@@ -37,18 +37,19 @@
 \newcommand{\dataset}{{\cal D}}
 \newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
 
+
 % Heading arguments are {volume}{year}{pages}{submitted}{published}{author-full-names}
 
 %\jmlrheading{1}{2018}{1-48}{4/00}{10/00}{Omid S. Solari, Yulun Wu, James B. Brown}
 
 % Short headings should be running head and authors last names
 
-\ShortHeadings{RGVMM}{Solari, Wu, Brown}
+\ShortHeadings{RMVE}{Solari, Wu, Brown}
 \firstpageno{1}
 
 \begin{document}
 
-\title{Repulsive Variational Gaussian Mixture Models}
+\title{Repulsive Mixture Variational Embedding}
 
 \author{\name Omid S. Solari\thanks{equally contributing authors, alphabetical order} \email solari@berkeley.edu \\
        \addr Department of Statistics\\
@@ -73,8 +74,8 @@
 
 tentative achievements:
 \begin{enumerate}
-    \item True Gaussian mixture model
-    \item Bayesian repulsive priors
+    \item separable and stable latent mixtures
+    \item better performance on entangled clustering
     \item cluster single cell data and map them to body
 \end{enumerate}
 
@@ -86,7 +87,7 @@ Gaussian Mixtures, Clustering, Variational Auto-Encoders
 \section{Introduction}
 
 \begin{itemize}
-    \item review use cases of gmms
+    \item review use cases of vae/gmvae
     \item review uses in genomics specifically
 \end{itemize}
 
@@ -94,8 +95,8 @@ Gaussian Mixtures, Clustering, Variational Auto-Encoders
 
 
 \begin{itemize}
-    \item review gaussian mixture models
-    \item review vae
+    \item review k-means and gaussian mixture models
+    \item review variational auto-encoder
     \item introduce repulsive priors
     \item set up the use for single cell data
 \end{itemize}
@@ -176,7 +177,7 @@ TODO: define notations
 \begin{equation} \label{supELBO}
 \begin{split}
 \mathcal{L}_\textit{ELBO} 
- & = \E_{q_\phi (\bm{z} | \bm{x})} \left[ \log 
+ & = \E_{q_\phi (\bm{z} | \bm{x}, \bm{y})} \left[ \log 
     p_\theta (\bm{x} | \bm{z}) \right] \\
  & \qquad - \E_{q_\phi (\bm{y} | \bm{x})} 
     \mathcal{D} \left[ q_\phi (\bm{z} | \bm{x}, 
@@ -190,27 +191,69 @@ TODO: define notations
 
 Sampling estimation for $q_\phi$: TODO \\
 
-Understanding the back-propagation for unsupervised case:
+\noindent Understanding the back-propagation for unsupervised case:
 $\E_{q_\phi (\bm{y} | \bm{x})} 
     \mathcal{D} \left[ q_\phi (\bm{z} | \bm{x}, 
     \bm{y}) \parallel p_\theta (\bm{z} | \bm{y}) 
     \right]$
 
 \begin{lemma}
-Latent prior model is a GMM with SGD update.
+In sampling estimation, The KL divergence term 
+that regularizes latent variable $z$: 
+$- \E_{q_\phi (\bm{y} | \bm{x})} 
+\mathcal{D} \left[ q_\phi (\bm{z} | \bm{x}, 
+\bm{y}) \parallel p_\theta (\bm{z} | \bm{y}) 
+\right]$ in our model is a prior-weighted 
+K-Means Model on latent prior $p_\theta (z)$.
 \end{lemma}
 
 \begin{proof}
-note: scaling gradient through propagation, $\sum_{\bm{y}}$, form of GMM model
+\begin{equation} \label{pfKmeans}
+\begin{split}
+- \E_{q_\phi (\bm{y} | \bm{x})} \mathcal{D} \left[ 
+q_\phi (\bm{z} | \bm{x}, \bm{y}) \parallel p_\theta 
+(\bm{z} | \bm{y}) \right] 
+ & = - \sum_{\bm{y}} q_\phi (\bm{y} | \bm{x}) 
+    \cdot \frac{1}{s} \sum_{\bm{z_1} \dots \bm{z_s} 
+    \in q_\phi (\bm{z} | \bm{x}, \bm{y})} 
+    \log \frac{q_\phi (\bm{z} | \bm{x}, \bm{y})}{
+    p_\theta (\bm{z} | \bm{y})} \\
+ & = \frac{1}{s} \sum_{\bm{y}} q_\phi (\bm{y} | 
+    \bm{x}) \sum_{\bm{z}} \log p (\bm{z} | 
+    \mu_\theta(\bm{y}), \bm{I}) - 
+    \textit{const}(p_\theta) \\
+ & = - \frac{1}{2s} \sum_{\bm{y}} q_\phi (\bm{y} | 
+    \bm{x}) \sum_{\bm{z}} {|| \bm{z} - 
+    \mu_\theta(\bm{y}) ||}^2 - 
+    \textit{const}(p_\theta)
+\end{split}
+\end{equation}
+
+This is a K-Means model with the learnt likelihood of 
+labels $q_\phi (\bm{y} | \bm{x})$ replacing the standard 
+weight $1 / |S_{\bm{y}}|$.
 \end{proof}
 
-\begin{lemma}
-GMVAE reduces to VaDE in simple case.
-\end{lemma}
+In SGD update, we won't be able 
+to track the total number of data in each mixture. 
+Alternatively, weighting the squared deviations in this 
+fashion makes the learning of label distribution more 
+responsible to the latent prior. \\
 
-\begin{lemma}
-SGD update is implicitly an MLE.
-\end{lemma}
+\begin{remark}
+Unsupervised RMVE reduces to VaDE in a simple case.
+\end{remark}
+
+When we assume conditional independence $q_\phi(\bm{y}, \bm{z} | \bm(x)) = q_\phi(\bm{y} | 
+\bm{x}) q_\phi(\bm{z} | \bm{x})$, and only consider regularizing $\bm{z}$: 
+$\mathcal{D} \left[ q_\phi (\bm{z} | \bm{x}) || 
+p_\theta (\bm{z} | \bm{x}) \right]$, it reduces to VaDE. \\
+
+\noindent note that the update of prior parameter is only in response to $p_\theta(\bm{z} | \bm{y})$ \\
+
+%\begin{lemma}
+%Sampling SGD update is implicitly an MLE.
+%\end{lemma}
 
 \subsection{Bayesian Repulsive Prior}
 
